@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build:*)",
+      "Bash(./harness-onboarder --help)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(./harness-onboarder:*)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:developer.harness.io)",
+      "Bash(go mod:*)",
+      "WebSearch",
+      "Bash(grep:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

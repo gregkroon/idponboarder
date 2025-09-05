@@ -1,0 +1,48 @@
+# Harness Onboarder Configuration Example
+# Copy this file to config.yaml and customize for your environment
+
+# GitHub Configuration
+github:
+  organization: "gregkroon"        # Required: GitHub organization name
+  app_id: 1855019                         # Required: GitHub App ID
+  private_key: "/path/to/private-key.pem" # Required: Path to GitHub App private key
+  install_id: 83117799                  # Required: GitHub App installation ID
+
+# Harness Configuration  
+harness:
+  api_key: "pat.Ke-E1FX2SO2ZAL2TXqpLjg.688ecbff87e71817fb17a691.s4Xi1mq9Qw1tXPrZvhNz"        # Required: Harness API key
+  account_id: "Ke-E1FX2SO2ZAL2TXqpLjg"          # Required: Harness account identifier
+  org_id: "default"                  # Required: Harness organization identifier  
+  project_id: "westpacmvp"          # Required: Harness project identifier
+  base_url: "https://app.harness.io"     # Optional: Harness base URL (defaults to SaaS)
+
+# Default Values for Components
+defaults:
+  owner: "user:account/greg.kroon"                 # Required: Default component owner
+  type: "service"                        # Optional: Default component type (service, library, website, etc.)
+  lifecycle: "production"                # Optional: Default lifecycle (experimental, production, deprecated)
+  system: ""                            # Optional: Default system/domain grouping
+  tags:                                  # Optional: Default tags to apply
+    managed-by: "harness-onboarder"
+  annotations:                           # Optional: Default annotations
+    harness.io/managed: "true"
+
+# Runtime Configuration
+runtime:
+  mode: "yaml"                           # Required: "yaml" for PR mode, "api" for direct API mode
+  concurrency: 5                         # Optional: Number of concurrent operations (default: 5)
+  dry_run: false                         # Optional: Dry run mode - no actual changes (default: false)
+  state_file: ".harness-onboarder-state.json" # Optional: State file for incremental runs
+  rate_limit: "100ms"                    # Optional: Rate limit between operations (default: 100ms)
+  log_level: "info"                      # Optional: Log level (debug, info, warn, error)
+  
+  # Repository Filtering
+  include_repos: []                      # Optional: Only process these repositories (empty = all)
+  exclude_repos:                         # Optional: Skip these repositories
+    - "archived-repo"
+    - "template-repo"
+  
+  # Repository Requirements
+  required_files: []                     # Optional: Only process repos with these files
+    # - "README.md"
+    # - "Dockerfile"
