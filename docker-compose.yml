@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  harness-onboarder:
+    build: .
+    container_name: harness-onboarder
+    environment:
+      # GitHub Configuration
+      - HARNESS_ONBOARDER_GITHUB_ORGANIZATION=${GITHUB_ORGANIZATION}
+      - HARNESS_ONBOARDER_GITHUB_APP_ID=${GITHUB_APP_ID}
+      - HARNESS_ONBOARDER_GITHUB_PRIVATE_KEY=${GITHUB_PRIVATE_KEY}
+      - HARNESS_ONBOARDER_GITHUB_INSTALL_ID=${GITHUB_INSTALL_ID}
+      
+      # Harness Configuration
+      - HARNESS_ONBOARDER_HARNESS_API_KEY=${HARNESS_API_KEY}
+      - HARNESS_ONBOARDER_HARNESS_ACCOUNT_ID=${HARNESS_ACCOUNT_ID}
+      - HARNESS_ONBOARDER_HARNESS_ORG_ID=${HARNESS_ORG_ID}
+      - HARNESS_ONBOARDER_HARNESS_PROJECT_ID=${HARNESS_PROJECT_ID}
+      - HARNESS_ONBOARDER_HARNESS_BASE_URL=${HARNESS_BASE_URL:-https://app.harness.io}
+      
+      # Runtime Configuration
+      - HARNESS_ONBOARDER_DEFAULTS_OWNER=${DEFAULT_OWNER:-platform-team}
+      - HARNESS_ONBOARDER_DEFAULTS_TYPE=${DEFAULT_TYPE:-service}
+      - HARNESS_ONBOARDER_DEFAULTS_LIFECYCLE=${DEFAULT_LIFECYCLE:-production}
+      - HARNESS_ONBOARDER_RUNTIME_MODE=${MODE:-yaml}
+      - HARNESS_ONBOARDER_RUNTIME_CONCURRENCY=${CONCURRENCY:-5}
+      - HARNESS_ONBOARDER_RUNTIME_DRY_RUN=${DRY_RUN:-false}
+      - HARNESS_ONBOARDER_RUNTIME_LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      # Mount state file to persist between runs
+      - ./state:/app/state
+      # Mount config if you prefer file-based config
+      - ./config.yaml:/app/config.yaml:ro
+      # Mount private key if using file path
+      - ./private-key.pem:/app/private-key.pem:ro
+    command: ["--state-file=/app/state/.harness-onboarder-state.json"]
+
+  # Cron service for scheduled runs
+  harness-onboarder-cron:
+    build: .
+    container_name: harness-onboarder-cron
+    environment:
+      # Same environment as above
+      - HARNESS_ONBOARDER_GITHUB_ORGANIZATION=${GITHUB_ORGANIZATION}
+      - HARNESS_ONBOARDER_GITHUB_APP_ID=${GITHUB_APP_ID}
+      - HARNESS_ONBOARDER_GITHUB_PRIVATE_KEY=${GITHUB_PRIVATE_KEY}
+      - HARNESS_ONBOARDER_GITHUB_INSTALL_ID=${GITHUB_INSTALL_ID}
+      - HARNESS_ONBOARDER_HARNESS_API_KEY=${HARNESS_API_KEY}
+      - HARNESS_ONBOARDER_HARNESS_ACCOUNT_ID=${HARNESS_ACCOUNT_ID}
+      - HARNESS_ONBOARDER_HARNESS_ORG_ID=${HARNESS_ORG_ID}
+      - HARNESS_ONBOARDER_HARNESS_PROJECT_ID=${HARNESS_PROJECT_ID}
+      - HARNESS_ONBOARDER_HARNESS_BASE_URL=${HARNESS_BASE_URL:-https://app.harness.io}
+      - HARNESS_ONBOARDER_DEFAULTS_OWNER=${DEFAULT_OWNER:-platform-team}
+      - HARNESS_ONBOARDER_DEFAULTS_TYPE=${DEFAULT_TYPE:-service}
+      - HARNESS_ONBOARDER_DEFAULTS_LIFECYCLE=${DEFAULT_LIFECYCLE:-production}
+      - HARNESS_ONBOARDER_RUNTIME_MODE=${MODE:-api}
+      - HARNESS_ONBOARDER_RUNTIME_CONCURRENCY=${CONCURRENCY:-3}
+      - HARNESS_ONBOARDER_RUNTIME_DRY_RUN=false
+      - HARNESS_ONBOARDER_RUNTIME_LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ./state:/app/state
+      - ./config.yaml:/app/config.yaml:ro
+      - ./private-key.pem:/app/private-key.pem:ro
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        # Install crond
+        apk add --no-cache cronie
+        # Create cron job for daily runs at 9 AM
+        echo "0 9 * * * /app/harness-onboarder --state-file=/app/state/.harness-onboarder-state.json --log-level=info" | crontab -
+        # Start crond in foreground
+        crond -f
+    profiles:
+      - cron
+
+volumes:
+  state:
